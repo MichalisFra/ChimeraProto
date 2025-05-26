@@ -141,7 +141,27 @@ fuseBtn.onclick = () => {
   fusedAnimalStats = fuseAnimals(selectedCards);
   playerFusedName = generateFusedName(selectedCards[0], selectedCards[1]);
 
-  fusionResultDiv.textContent = `Fused Animal: ${playerFusedName} — STR: ${fusedAnimalStats.STR}, SPE: ${fusedAnimalStats.SPE}, INT: ${fusedAnimalStats.INT}`;
+  const fusionImage1 = `assets/images/${selectedCards[0]}${selectedCards[1]}.png`;
+  const fusionImage2 = `assets/images/${selectedCards[1]}${selectedCards[0]}.png`;
+
+  const img = document.createElement('img');
+  img.style.width = '150px';
+  img.style.display = 'block';
+  img.style.marginBottom = '10px';
+
+  // Try loading first combination; if it fails, fallback to second
+  img.src = fusionImage1;
+  img.onerror = () => {
+    img.onerror = null; // prevent infinite loop
+    img.src = fusionImage2;
+  };
+
+  fusionResultDiv.innerHTML = '';
+  fusionResultDiv.appendChild(img);
+  fusionResultDiv.innerHTML += `
+    <strong>Fused Animal: ${playerFusedName}</strong><br>
+    STR: ${fusedAnimalStats.STR}, SPE: ${fusedAnimalStats.SPE}, INT: ${fusedAnimalStats.INT}
+  `;
 
   // Remove fused cards from hand
   player1.removeFromHand(selectedCards);
