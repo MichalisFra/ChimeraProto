@@ -135,33 +135,57 @@ function generateFusedName(name1, name2) {
   return (half1 + half2).charAt(0).toUpperCase() + (half1 + half2).slice(1);
 }
 
+function tryFusionImage(name1, name2, callback) {
+  const tryOrder = [`${name1}${name2}`, `${name2}${name1}`];
+  let index = 0;
+
+  function tryNext() {
+    if (index >= tryOrder.length) {
+      callback(null); // both failed
+      return;
+    }
+
+    const imagePath = `assets/images/${tryOrder[index]}.png`;
+    const testImg = new Image();
+
+    testImg.onload = () => callback(imagePath);
+    testImg.onerror = () => {
+      index++;
+      tryNext();
+    };
+
+    testImg.src = imagePath;
+  }
+
+  tryNext();
+}
+
 // Fuse button handler
 fuseBtn.onclick = () => {
   if (selectedCards.length !== 2) return;
   fusedAnimalStats = fuseAnimals(selectedCards);
   playerFusedName = generateFusedName(selectedCards[0], selectedCards[1]);
 
-  const fusionImage1 = `assets/images/${selectedCards[0]}${selectedCards[1]}.png`;
-  const fusionImage2 = `assets/images/${selectedCards[1]}${selectedCards[0]}.png`;
-
-  const img = document.createElement('img');
-  img.style.width = '150px';
-  img.style.display = 'block';
-  img.style.marginBottom = '10px';
-
-  // Try loading first combination; if it fails, fallback to second
-  img.src = fusionImage1;
-  img.onerror = () => {
-    img.onerror = null; // prevent infinite loop
-    img.src = fusionImage2;
-  };
-
   fusionResultDiv.innerHTML = '';
-  fusionResultDiv.appendChild(img);
-  fusionResultDiv.innerHTML += `
-    <strong>Fused Animal: ${playerFusedName}</strong><br>
-    STR: ${fusedAnimalStats.STR}, SPE: ${fusedAnimalStats.SPE}, INT: ${fusedAnimalStats.INT}
-  `;
+
+  tryFusionImage(selectedCards[0], selectedCards[1], (imagePath) => {
+    if (imagePath) {
+      const img = document.createElement('img');
+      img.src = imagePath;
+      img.style.width = '150px';
+      img.style.display = 'block';
+      img.style.marginBottom = '10px';
+      fusionResultDiv.appendChild(img);
+    } else {
+      // Optional: fallback silhouette
+      fusionResultDiv.innerHTML += `<em>No image found for fusion.</em><br>`;
+    }
+
+    fusionResultDiv.innerHTML += `
+      <strong>Fused Animal: ${playerFusedName}</strong><br>
+      STR: ${fusedAnimalStats.STR}, SPE: ${fusedAnimalStats.SPE}, INT: ${fusedAnimalStats.INT}
+    `;
+  });
 
   // Remove fused cards from hand
   player1.removeFromHand(selectedCards);
@@ -171,7 +195,8 @@ fuseBtn.onclick = () => {
 
   decisionArea.style.display = 'block';
   roundResultDiv.textContent = '';
-  };
+};
+
 
 // Decision buttons handlers
 compareAvgBtn.onclick = () => {
