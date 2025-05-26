@@ -129,10 +129,60 @@ function renderHand() {
   });
 }
 
+function createFusedAnimal(animal1, animal2, size) {
+  // Create an offscreen canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Load images asynchronously with promises
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(`Failed to load image: ${src}`);
+      img.src = src;
+    });
+  }
+
+  // Use image paths based on animal names
+  const img1Path = `assets/images/${animal1}.png`;
+  const img2Path = `assets/images/${animal2}.png`;
+
+  return Promise.all([loadImage(img1Path), loadImage(img2Path)])
+    .then(([img1, img2]) => {
+      // Clear canvas
+      ctx.clearRect(0, 0, size, size);
+
+      // Draw first image on left half
+      ctx.drawImage(img1, 0, 0, size / 2, size);
+
+      // Draw second image on right half
+      ctx.drawImage(img2, size / 2, 0, size / 2, size);
+
+      // Return the canvas
+      return canvas;
+    })
+    .catch(err => {
+      console.error(err);
+      return canvas;  // return empty canvas on failure
+    });
+}
+
+
 function generateFusedName(name1, name2) {
   const half1 = name1.slice(0, Math.ceil(name1.length / 2));
   const half2 = name2.slice(Math.floor(name2.length / 2));
   return (half1 + half2).charAt(0).toUpperCase() + (half1 + half2).slice(1);
+}
+
+function tryFusionImagePromise(name1, name2) {
+  return new Promise((resolve) => {
+    tryFusionImage(name1, name2, (imagePath) => {
+      resolve(imagePath); // imagePath or null
+    });
+  });
 }
 
 function tryFusionImage(name1, name2, callback) {
@@ -160,11 +210,14 @@ function tryFusionImage(name1, name2, callback) {
   tryNext();
 }
 
-// Fuse button handler
+let lastFusedAnimalNames = [];
+
 fuseBtn.onclick = () => {
   if (selectedCards.length !== 2) return;
   fusedAnimalStats = fuseAnimals(selectedCards);
   playerFusedName = generateFusedName(selectedCards[0], selectedCards[1]);
+
+  lastFusedAnimalNames = [...selectedCards];  // store for later drawing
 
   fusionResultDiv.innerHTML = '';
 
@@ -177,7 +230,6 @@ fuseBtn.onclick = () => {
       img.style.marginBottom = '10px';
       fusionResultDiv.appendChild(img);
     } else {
-      // Optional: fallback silhouette
       fusionResultDiv.innerHTML += `<em>No image found for fusion.</em><br>`;
     }
 
@@ -187,7 +239,6 @@ fuseBtn.onclick = () => {
     `;
   });
 
-  // Remove fused cards from hand
   player1.removeFromHand(selectedCards);
   selectedCards = [];
   fuseBtn.disabled = true;
@@ -216,7 +267,7 @@ attributeChoiceDiv.querySelectorAll('.attr-btn').forEach(btn => {
 });
 
 // Round resolution function
-function resolveRound(mode, attribute = null) {
+async function resolveRound(mode, attribute = null) {
   // Opponent fuses two random animals
   const animalKeys = Object.keys(animals);
   function randomAnimal() {
@@ -238,12 +289,40 @@ function resolveRound(mode, attribute = null) {
     winner = fusedAnimalStats[attribute] >= oppFuse[attribute] ? 'Player 1' : 'Opponent';
   }
 
-  // Show round result including both fusions
+  // Get fusion images paths (or null)
+  const playerFusionImgPath = await tryFusionImagePromise(lastFusedAnimalNames[0], lastFusedAnimalNames[1]);
+  const oppFusionImgPath = await tryFusionImagePromise(oppCard1, oppCard2);
+
+  // Build HTML for images or fallback
+  function buildAnimalHtml(name1, name2, fusedName, fusedStats, fusionImgPath, isWinner) {
+    const imgHtml = fusionImgPath
+      ? `<img src="${fusionImgPath}" alt="${fusedName}" style="width:150px; display:block; margin: 10px auto;">`
+      : `<div style="display:flex; justify-content:center; gap:10px; margin: 10px 0;">
+           <img src="assets/images/${name1}.png" alt="${name1}" style="width:70px;">
+           <img src="assets/images/${name2}.png" alt="${name2}" style="width:70px;">
+         </div>`;
+
+    return `
+      <div style="text-align: center; padding: 15px; background: ${isWinner ? '#e8f5e9' : '#ffebee'}; border-radius: 8px;">
+        <h3>${fusedName}</h3>
+        ${imgHtml}
+        <p>STR: ${fusedStats.STR}<br>
+           SPE: ${fusedStats.SPE}<br>
+           INT: ${fusedStats.INT}</p>
+        ${isWinner ? '<div style="color: green; font-weight: bold;">WINNER!</div>' : ''}
+      </div>
+    `;
+  }
+
   roundResultDiv.innerHTML = `
-    <strong>You chose ${mode}${attribute ? ' (' + attribute + ')' : ''}.</strong><br><br>
-    <strong>Your Fused Animal (${playerFusedName}):</strong> ${fusedAnimalStats ? `STR: ${fusedAnimalStats.STR}, SPE: ${fusedAnimalStats.SPE}, INT: ${fusedAnimalStats.INT}` : 'None'}<br>
-    <strong>Opponent's Fused Animal (${oppFusedName}):</strong> STR: ${oppFuse.STR}, SPE: ${oppFuse.SPE}, INT: ${oppFuse.INT}<br><br>
-    <strong>Result:</strong> You ${winner === 'Player 1' ? 'win!' : 'lose.'}
+    <div style="display: flex; justify-content: space-around; margin: 20px 0;">
+      ${buildAnimalHtml(lastFusedAnimalNames[0], lastFusedAnimalNames[1], playerFusedName, fusedAnimalStats, playerFusionImgPath, winner === 'Player 1')}
+      ${buildAnimalHtml(oppCard1, oppCard2, oppFusedName, oppFuse, oppFusionImgPath, winner === 'Opponent')}
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+      <strong>Comparison Mode:</strong> ${mode}${attribute ? ' (' + attribute + ')' : ''}
+    </div>
   `;
 
   // Reset UI for next turn
@@ -251,9 +330,22 @@ function resolveRound(mode, attribute = null) {
   fusionResultDiv.textContent = '';
   decisionArea.style.display = 'none';
 
+  // Clear selection and disable fuse button
+  selectedCards = [];
+  fuseBtn.disabled = true;
+  playerFusedName = null;  // optional
+
   // Draw cards back up to 5
   player1.drawCards();
   renderHand();
+
+  // Draw opponent's fused animal canvas
+  const oppCanvas = document.getElementById('opponent-fused-canvas');
+  const oppCtx = oppCanvas.getContext('2d');
+  createFusedAnimal(oppCard1, oppCard2, 150).then(oppFusedCanvas => {
+    oppCtx.clearRect(0, 0, 150, 150);
+    oppCtx.drawImage(oppFusedCanvas, 0, 0, 150, 150);
+  });
 }
 
 
