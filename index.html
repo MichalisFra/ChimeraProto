@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Animal Fusion Game Prototype</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .card {
+      display: inline-block;
+      border: 1px solid #333;
+      padding: 8px 12px;
+      margin: 5px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .selected {
+      background-color: #aaf;
+      border-color: #55f;
+    }
+    button {
+      margin: 5px;
+      padding: 6px 12px;
+    }
+    #attribute-choice button {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Animal Fusion Game Prototype</h1>
+  <div>
+    <h2>Your Hand (Select 2 cards to fuse)</h2>
+    <div id="p1-cards"></div>
+    <button id="fuse-btn" disabled>Fuse Selected Cards</button>
+  </div>
+  <div id="fusion-result" style="margin-top: 15px; font-weight: bold;"></div>
+  <div id="decision-area" style="margin-top: 15px; display:none;">
+    <p>Choose comparison mode:</p>
+    <button id="compare-average">Compare Average</button>
+    <button id="compare-attribute">Compare Attribute</button>
+    <div id="attribute-choice" style="margin-top:10px; display:none;">
+      <button class="attr-btn" data-attr="STR">STR</button>
+      <button class="attr-btn" data-attr="SPE">SPE</button>
+      <button class="attr-btn" data-attr="INT">INT</button>
+    </div>
+  </div>
+  <div id="round-result" style="margin-top: 15px; font-weight: bold;"></div>
+
+  <script src="./js/fusion.js"></script>
+</body>
+</html>

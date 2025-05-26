@@ -1,0 +1,27 @@
+.hand-container, #fusion-area, #decision-area {
+    margin: 20px 0;
+  }
+  
+  .cards {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .card {
+    border: 1px solid #333;
+    padding: 10px;
+    cursor: pointer;
+    user-select: none;
+    width: 120px;
+    text-align: center;
+  }
+  
+  .card.selected {
+    border-color: blue;
+    background-color: #def;
+  }
+  
+  button {
+    margin: 5px;
+  }
+  
