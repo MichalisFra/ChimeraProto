@@ -13,7 +13,7 @@ const animals = {
   // shark: { STR: 19, SPE: 16, INT: 9, weights: { STR: 0.6, SPE: 0.3, INT: 0.1 } },
   // horse: { STR: 15, SPE: 17, INT: 11, weights: { STR: 0.4, SPE: 0.5, INT: 0.1 } },
   // snake: { STR: 10, SPE: 18, INT: 14, weights: { STR: 0.2, SPE: 0.6, INT: 0.2 } },
-  // frog: { STR: 7, SPE: 14, INT: 11, weights: { STR: 0.2, SPE: 0.6, INT: 0.2 } },
+  frog: { STR: 7, SPE: 14, INT: 11, weights: { STR: 0.2, SPE: 0.6, INT: 0.2 } },
   tiger: { STR: 19, SPE: 14, INT: 12, weights: { STR: 0.7, SPE: 0.2, INT: 0.1 } },
   penguin: { STR: 8, SPE: 10, INT: 13, weights: { STR: 0.2, SPE: 0.3, INT: 0.5 } },
   gorilla: { STR: 18, SPE: 11, INT: 14, weights: { STR: 0.6, SPE: 0.1, INT: 0.3 } },
